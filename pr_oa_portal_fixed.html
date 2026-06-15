@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PR Notice & OA Approval Portal - Fixed</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+<style>
+/* ─── RESET & BASE ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f1a;
+  --bg2:#111828;
+  --bg3:#161d2e;
+  --card:#161d2e;
+  --card2:#1c2438;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --accent:#4f8ef7;
+  --accent2:#7c5fff;
+  --accent3:#00e5a0;
+  --accent4:#f7c94f;
+  --accent5:#f76f6f;
+  --text:#e8edf5;
+  --text2:#8a95a8;
+  --text3:#5a6378;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --rad:12px;
+  --rad2:8px;
+  --rad3:20px;
+}
+
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+
+/* ─── SIDEBAR ─── */
+#sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:240px;
+  background:rgba(17,24,40,0.95);
+  border-right:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  z-index:100;display:flex;flex-direction:column;
+  transform:translateX(0);transition:transform 0.3s;
+}
+#sidebar.collapsed{transform:translateX(-240px)}
+.sidebar-header{padding:1.5rem 1.25rem 1rem;border-bottom:1px solid var(--border)}
+.sidebar-header .s-logo{display:flex;align-items:center;gap:10px}
+.sidebar-header h2{font-family:var(--font-head);font-size:13px;font-weight:700;line-height:1.3}
+.sidebar-header p{font-size:10px;color:var(--text3);margin-top:1px}
+
+.sidebar-nav{flex:1;overflow-y:auto;padding:1rem 0.75rem}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;padding:0.5rem 0.5rem 0.3rem;margin-top:0.5rem}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:var(--rad2);
+  color:var(--text2);font-size:13.5px;font-weight:400;
+  cursor:pointer;transition:background 0.15s,color 0.15s;
+  margin-bottom:2px;
+}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-item.active{background:rgba(79,142,247,0.12);color:var(--accent);font-weight:500}
+
+/* ─── TOPBAR ─── */
+#topbar{
+  position:fixed;top:0;left:240px;right:0;height:60px;
+  background:rgba(11,15,26,0.85);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);z-index:90;
+  display:flex;align-items:center;padding:0 1.5rem;gap:1rem;
+  transition:left 0.3s;
+}
+#topbar.expanded{left:0}
+.topbar-title{font-family:var(--font-head);font-size:16px;font-weight:700;flex:1}
+
+/* ─── MAIN ─── */
+#main{margin-left:240px;padding-top:60px;min-height:100vh;transition:margin-left 0.3s}
+#main.expanded{margin-left:0}
+.page{display:none;padding:1.25rem 1.75rem;animation:fadeUp 0.4s ease both}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+.page-header{margin-bottom:1.5rem}
+.page-header h1{font-family:var(--font-head);font-size:1.5rem;font-weight:800;letter-spacing:-0.03em;line-height:1.2}
+.page-header p{color:var(--text2);font-size:14px;margin-top:0.3rem}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);margin-bottom:0.5rem}
+.breadcrumb span+span::before{content:'/';margin-right:6px;opacity:0.4}
+
+/* ─── KPI CARDS ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--rad);padding:1rem 1.25rem;
+  position:relative;overflow:hidden;
+}
+.kpi-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.6rem;display:flex;align-items:center;gap:6px}
+.kpi-val{font-family:var(--font-head);font-size:1.65rem;font-weight:800;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:0.25rem}
+
+/* ─── TABLE ─── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--rad);border:1px solid var(--border);margin-bottom:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--card2);padding:12px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.07em;white-space:nowrap;border-bottom:1px solid var(--border)}
+tbody td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* ─── BADGE ─── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.badge-blue{background:rgba(79,142,247,0.12);color:#6fa8f8}
+.badge-green{background:rgba(0,229,160,0.1);color:var(--accent3)}
+.badge-amber{background:rgba(247,201,79,0.12);color:var(--accent4)}
+.badge-red{background:rgba(247,111,111,0.12);color:var(--accent5)}
+.badge-gray{background:rgba(255,255,255,0.06);color:var(--text2)}
+
+/* ─── CARD ─── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:1rem 1.25rem;margin-bottom:1rem}
+.card-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--rad2);font-size:13.5px;font-weight:500;cursor:pointer;border:none;transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(79,142,247,0.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(79,142,247,0.45)}
+.btn-ghost{background:rgba(255,255,255,0.04);color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:rgba(255,255,255,0.08);color:var(--text)}
+
+/* ─── FORM ─── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.form-group{margin-bottom:1rem}
+.form-group.full{grid-column:1/-1}
+.form-group label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em}
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border2);border-radius:var(--rad2);
+  padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,142,247,0.12)}
+.form-group textarea{resize:vertical;min-height:90px}
+
+/* ─── EMPTY STATE ─── */
+.empty-state{text-align:center;padding:3rem;color:var(--text2)}
+.empty-state svg{width:48px;height:48px;stroke:var(--text3);fill:none;stroke-width:1.5;margin:0 auto 1rem;display:block}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:768px){
+  #sidebar{transform:translateX(-240px)}
+  #sidebar.mobile-open{transform:translateX(0)}
+  #main{margin-left:0}
+  #topbar{left:0}
+  .page{padding:1.25rem 1rem}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════ -->
+<nav id="sidebar" role="navigation" aria-label="Main navigation">
+  <div class="sidebar-header">
+    <div class="s-logo">
+      <div>
+        <h2>Delta Electronics</h2>
+        <p>PR & OA Portal</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">Dashboard</div>
+    <div class="nav-item" onclick="showPage('projects',this)">Model List</div>
+    <div class="nav-item" onclick="showPage('create-project',this)">Create Model</div>
+
+    <div class="nav-label">Workflow</div>
+    <div class="nav-item" onclick="showPage('pr-notice',this)">PR Notice</div>
+
+    <div class="nav-label">Reports</div>
+    <div class="nav-item" onclick="showPage('overall-actions',this)">Overall Action Tracker</div>
+    <div class="nav-item" onclick="showPage('project-summary',this)">Project Summary</div>
+    <div class="nav-item" onclick="showPage('reports',this)">Reports & Export</div>
+  </div>
+
+  <div style="padding:1rem 0.75rem;border-top:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer" onclick="doLogout()">
+      <span style="font-size:13px">Sign out</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     TOPBAR
+════════════════════════════════════════ -->
+<header id="topbar">
+  <span class="topbar-title" id="topbar-title">Dashboard</span>
+</header>
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- ═══ DASHBOARD ═══ -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-header">
+      <h1>Project Summary Dashboard</h1>
+      <p>Overview of all projects and action items</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Total Projects</div>
+        <div class="kpi-val" id="kpi-total">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Total PR Notices</div>
+        <div class="kpi-val" id="kpi-pr">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Open Actions</div>
+        <div class="kpi-val" id="kpi-open-actions">0</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Closed Actions</div>
+        <div class="kpi-val" id="kpi-closed-actions">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PR NOTICE ═══ -->
+  <div id="page-pr-notice" class="page">
+    <div class="page-header">
+      <h1>PR Notice</h1>
+      <p>Manage and track all Pilot Run Notices</p>
+    </div>
+
+    <!-- PR Stats -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1.25rem">
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.25);border-radius:var(--rad2);padding:8px 16px;font-size:13px">
+          <span style="color:var(--text3)">Total PRs:</span>
+          <span id="pr-total-count" style="font-weight:700;color:var(--accent);margin-left:6px">0</span>
+        </div>
+        <div style="background:rgba(247,201,79,0.08);border:1px solid rgba(247,201,79,0.25);border-radius:var(--rad2);padding:8px 16px;font-size:13px">
+          <span style="color:var(--text3)">In Approval:</span>
+          <span id="pr-approval-count" style="font-weight:700;color:#f7c94f;margin-left:6px">0</span>
+        </div>
+        <div style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);border-radius:var(--rad2);padding:8px 16px;font-size:13px">
+          <span style="color:var(--text3)">Completed:</span>
+          <span id="pr-complete-count" style="font-weight:700;color:#00e5a0;margin-left:6px">0</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openCreatePR()">Create PR</button>
+    </div>
+
+    <!-- PR Table -->
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>PR Doc No.</th>
+            <th>WO No.</th>
+            <th>Project Name</th>
+            <th>Model Name</th>
+            <th>Requestor</th>
+            <th>Stage</th>
+            <th>Build Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="pr-notice-tbody">
+          <tr id="pr-empty-row">
+            <td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">No PR Notices found. Click "Create PR" to add one.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Create PR Modal -->
+    <div id="create-pr-overlay" style="display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,0.7);align-items:flex-start;justify-content:center;overflow-y:auto;padding:2rem 1rem;display:none">
+      <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rad);width:100%;max-width:720px;box-shadow:0 24px 80px rgba(0,0,0,0.6);animation:fadeUp 0.3s ease both;margin-top:2rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.75rem;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:700">Create PR Notice</div>
+          </div>
+          <button onclick="closeCreatePR()" style="background:none;border:1px solid var(--border2);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--text2);font-size:18px">✕</button>
+        </div>
+        <div style="padding:1.75rem">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>PR Document No. (Auto)</label>
+              <input type="text" id="pr-doc-no" readonly style="opacity:0.7" />
+            </div>
+            <div class="form-group">
+              <label>WO No.</label>
+              <input type="text" id="pr-wo-no" placeholder="Enter WO number" />
+            </div>
+            <div class="form-group">
+              <label>Project Name</label>
+              <input type="text" id="pr-project-name" placeholder="Project name" />
+            </div>
+            <div class="form-group">
+              <label>Model Name</label>
+              <input type="text" id="pr-model-name" placeholder="Model name" />
+            </div>
+            <div class="form-group">
+              <label>Requestor</label>
+              <input type="text" id="pr-requestor" placeholder="Requestor name" />
+            </div>
+            <div class="form-group">
+              <label>Stage</label>
+              <select id="pr-stage">
+                <option value="">Select Stage</option>
+                <option>EVT</option>
+                <option>DVT</option>
+                <option>PVT</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Build Date</label>
+              <input type="date" id="pr-build-date" />
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="pr-status">
+                <option value="In Approval">In Approval</option>
+                <option value="Approved">Approved</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:1.5rem">
+            <button class="btn btn-primary" onclick="savePR()">Save PR</button>
+            <button class="btn btn-ghost" onclick="closeCreatePR()">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ OVERALL ACTION TRACKER ═══ -->
+  <div id="page-overall-actions" class="page">
+    <div class="page-header">
+      <h1>Overall Action Tracker</h1>
+      <p>All action points across all models</p>
+    </div>
+
+    <!-- Action Stats -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem">
+      <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.25);border-radius:var(--rad2);padding:8px 16px;font-size:13px">
+        <span style="color:var(--text3)">Open Points:</span>
+        <span id="overall-open-count" style="font-weight:700;color:var(--accent);margin-left:6px">0</span>
+      </div>
+      <div style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.25);border-radius:var(--rad2);padding:8px 16px;font-size:13px">
+        <span style="color:var(--text3)">Closed Points:</span>
+        <span id="overall-closed-count" style="font-weight:700;color:#00e5a0;margin-left:6px">0</span>
+      </div>
+    </div>
+
+    <!-- Actions Table -->
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Project</th>
+            <th>Action Point</th>
+            <th>Owner</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="overall-actions-tbody">
+          <tr id="overall-empty-row">
+            <td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text3)">No action points found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ PROJECT SUMMARY ═══ -->
+  <div id="page-project-summary" class="page">
+    <div class="page-header">
+      <h1>Project Summary</h1>
+      <p>Overview of all created models and projects</p>
+    </div>
+
+    <!-- Project Summary Table -->
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Project Name</th>
+            <th>Model Name</th>
+            <th>Customer</th>
+            <th>BG</th>
+            <th>BU</th>
+            <th>Stage</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>MP Target Date</th>
+          </tr>
+        </thead>
+        <tbody id="project-summary-tbody">
+          <tr id="project-summary-empty-row">
+            <td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">No projects found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ MODEL LIST ═══ -->
+  <div id="page-projects" class="page">
+    <div class="page-header">
+      <h1>Model List</h1>
+      <p>All created models</p>
+    </div>
+    <button class="btn btn-primary" onclick="showPage('create-project',document.querySelectorAll('.nav-item')[2])">New Model</button>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Project Name</th>
+            <th>Model Name</th>
+            <th>Customer</th>
+            <th>BG</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="proj-table">
+          <tr id="proj-empty-row">
+            <td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text3)">No projects found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ CREATE MODEL ═══ -->
+  <div id="page-create-project" class="page">
+    <div class="page-header">
+      <h1>Create Model</h1>
+      <p>Enter all required information to initiate a new project</p>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Project Name *</label>
+          <input type="text" id="cm-project-name" placeholder="Enter project name" />
+        </div>
+        <div class="form-group">
+          <label>Model Name *</label>
+          <input type="text" id="cm-model-name" placeholder="e.g. Model XR-200A" />
+        </div>
+        <div class="form-group">
+          <label>Customer Name *</label>
+          <input type="text" id="cm-customer" placeholder="Enter customer name" />
+        </div>
+        <div class="form-group">
+          <label>BG (Business Group) *</label>
+          <select id="cm-bg">
+            <option value="">Select BG</option>
+            <option>EIBG</option>
+            <option>FMBG</option>
+            <option>IABG</option>
+            <option>ICTBG</option>
+            <option>PSBG</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>BU (Business Unit) *</label>
+          <select id="cm-bu">
+            <option value="">Select BU</option>
+            <option>APBU</option>
+            <option>CISBU</option>
+            <option>CPSBU</option>
+            <option>ECBU</option>
+            <option>GPSBU</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Stage *</label>
+          <select id="cm-stage">
+            <option value="">Select Stage</option>
+            <option>EVT</option>
+            <option>DVT</option>
+            <option>PVT</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Project Owner *</label>
+          <input type="text" id="cm-owner" placeholder="Enter project owner name" />
+        </div>
+        <div class="form-group">
+          <label>MP Target Date *</label>
+          <input type="date" id="cm-mp-date" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="cm-status">
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="On Hold">On Hold</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:1.5rem">
+        <button class="btn btn-primary" onclick="saveProject()">Save Project</button>
+        <button class="btn btn-ghost" onclick="showPage('projects',document.querySelectorAll('.nav-item')[1])">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORTS ═══ -->
+  <div id="page-reports" class="page">
+    <div class="page-header">
+      <h1>Reports & Export</h1>
+      <p>Export data and generate reports</p>
+    </div>
+    <div class="card">
+      <p>Reports functionality coming soon...</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════
+// LOCAL STORAGE MANAGEMENT
+// ═══════════════════════════════════════
+
+// Initialize data
+function initializeData() {
+  if (!localStorage.getItem('projects')) localStorage.setItem('projects', JSON.stringify([]));
+  if (!localStorage.getItem('prNotices')) localStorage.setItem('prNotices', JSON.stringify([]));
+  if (!localStorage.getItem('actions')) localStorage.setItem('actions', JSON.stringify([]));
+}
+
+// Get all data
+function getProjects() { return JSON.parse(localStorage.getItem('projects')) || []; }
+function getPRNotices() { return JSON.parse(localStorage.getItem('prNotices')) || []; }
+function getActions() { return JSON.parse(localStorage.getItem('actions')) || []; }
+
+// Save data
+function saveProjects(data) { localStorage.setItem('projects', JSON.stringify(data)); }
+function savePRNotices(data) { localStorage.setItem('prNotices', JSON.stringify(data)); }
+function saveActions(data) { localStorage.setItem('actions', JSON.stringify(data)); }
+
+// ═══════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════
+
+function showPage(pageId, navItem) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  
+  // Show selected page
+  const page = document.getElementById('page-' + pageId);
+  if (page) {
+    page.classList.add('active');
+    document.getElementById('topbar-title').textContent = navItem?.textContent || pageId;
+    
+    // Load data for the page
+    if (pageId === 'pr-notice') renderPRNoticeTable();
+    if (pageId === 'overall-actions') renderOverallActionsTable();
+    if (pageId === 'project-summary') renderProjectSummaryTable();
+    if (pageId === 'projects') renderProjectsTable();
+    if (pageId === 'dashboard') updateDashboard();
+  }
+  
+  // Update nav item
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navItem) navItem.classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// PROJECT MANAGEMENT
+// ═══════════════════════════════════════
+
+function saveProject() {
+  const project = {
+    id: Date.now(),
+    projectName: document.getElementById('cm-project-name').value,
+    modelName: document.getElementById('cm-model-name').value,
+    customer: document.getElementById('cm-customer').value,
+    bg: document.getElementById('cm-bg').value,
+    bu: document.getElementById('cm-bu').value,
+    stage: document.getElementById('cm-stage').value,
+    owner: document.getElementById('cm-owner').value,
+    mpDate: document.getElementById('cm-mp-date').value,
+    status: document.getElementById('cm-status').value || 'In Progress',
+    createdDate: new Date().toLocaleDateString()
+  };
+
+  if (!project.projectName || !project.modelName || !project.customer) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  const projects = getProjects();
+  projects.push(project);
+  saveProjects(projects);
+
+  // Clear form
+  document.getElementById('cm-project-name').value = '';
+  document.getElementById('cm-model-name').value = '';
+  document.getElementById('cm-customer').value = '';
+  document.getElementById('cm-bg').value = '';
+  document.getElementById('cm-bu').value = '';
+  document.getElementById('cm-stage').value = '';
+  document.getElementById('cm-owner').value = '';
+  document.getElementById('cm-mp-date').value = '';
+  document.getElementById('cm-status').value = 'In Progress';
+
+  alert('Project saved successfully!');
+  showPage('projects', document.querySelectorAll('.nav-item')[1]);
+}
+
+function renderProjectsTable() {
+  const projects = getProjects();
+  const tbody = document.getElementById('proj-table');
+  const emptyRow = document.getElementById('proj-empty-row');
+
+  if (projects.length === 0) {
+    tbody.innerHTML = '<tr id="proj-empty-row"><td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text3)">No projects found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = projects.map((p, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${p.projectName}</td>
+      <td>${p.modelName}</td>
+      <td>${p.customer}</td>
+      <td><span class="badge badge-blue">${p.bg}</span></td>
+      <td><span class="badge badge-green">${p.status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// PR NOTICE MANAGEMENT
+// ═══════════════════════════════════════
+
+function openCreatePR() {
+  document.getElementById('pr-doc-no').value = 'PR-' + new Date().getTime();
+  document.getElementById('create-pr-overlay').style.display = 'flex';
+}
+
+function closeCreatePR() {
+  document.getElementById('create-pr-overlay').style.display = 'none';
+}
+
+function savePR() {
+  const pr = {
+    id: Date.now(),
+    docNo: document.getElementById('pr-doc-no').value,
+    woNo: document.getElementById('pr-wo-no').value,
+    projectName: document.getElementById('pr-project-name').value,
+    modelName: document.getElementById('pr-model-name').value,
+    requestor: document.getElementById('pr-requestor').value,
+    stage: document.getElementById('pr-stage').value,
+    buildDate: document.getElementById('pr-build-date').value,
+    status: document.getElementById('pr-status').value,
+    createdDate: new Date().toLocaleDateString()
+  };
+
+  if (!pr.woNo || !pr.projectName) {
+    alert('Please fill in all required fields');
+    return;
+  }
+
+  const notices = getPRNotices();
+  notices.push(pr);
+  savePRNotices(notices);
+
+  // Clear form
+  document.getElementById('pr-wo-no').value = '';
+  document.getElementById('pr-project-name').value = '';
+  document.getElementById('pr-model-name').value = '';
+  document.getElementById('pr-requestor').value = '';
+  document.getElementById('pr-stage').value = '';
+  document.getElementById('pr-build-date').value = '';
+
+  closeCreatePR();
+  renderPRNoticeTable();
+  alert('PR Notice saved successfully!');
+}
+
+function renderPRNoticeTable() {
+  const notices = getPRNotices();
+  const tbody = document.getElementById('pr-notice-tbody');
+
+  if (notices.length === 0) {
+    tbody.innerHTML = '<tr id="pr-empty-row"><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">No PR Notices found. Click "Create PR" to add one.</td></tr>';
+    document.getElementById('pr-total-count').textContent = '0';
+    document.getElementById('pr-approval-count').textContent = '0';
+    document.getElementById('pr-complete-count').textContent = '0';
+    return;
+  }
+
+  tbody.innerHTML = notices.map((pr, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${pr.docNo}</td>
+      <td style="color:#f7c94f">${pr.woNo}</td>
+      <td>${pr.projectName}</td>
+      <td>${pr.modelName}</td>
+      <td>${pr.requestor}</td>
+      <td>${pr.stage}</td>
+      <td>${pr.buildDate}</td>
+      <td><span class="badge ${pr.status === 'Completed' ? 'badge-green' : pr.status === 'In Approval' ? 'badge-amber' : 'badge-gray'}">${pr.status}</span></td>
+      <td><button class="btn btn-ghost" onclick="deletePR(${pr.id})">Delete</button></td>
+    </tr>
+  `).join('');
+
+  // Update counters
+  document.getElementById('pr-total-count').textContent = notices.length;
+  document.getElementById('pr-approval-count').textContent = notices.filter(p => p.status === 'In Approval').length;
+  document.getElementById('pr-complete-count').textContent = notices.filter(p => p.status === 'Completed').length;
+}
+
+function deletePR(id) {
+  if (confirm('Delete this PR Notice?')) {
+    const notices = getPRNotices().filter(p => p.id !== id);
+    savePRNotices(notices);
+    renderPRNoticeTable();
+  }
+}
+
+// ═══════════════════════════════════════
+// OVERALL ACTION TRACKER
+// ═══════════════════════════════════════
+
+function renderOverallActionsTable() {
+  const actions = getActions();
+  const tbody = document.getElementById('overall-actions-tbody');
+
+  if (actions.length === 0) {
+    tbody.innerHTML = '<tr id="overall-empty-row"><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text3)">No action points found.</td></tr>';
+    document.getElementById('overall-open-count').textContent = '0';
+    document.getElementById('overall-closed-count').textContent = '0';
+    return;
+  }
+
+  tbody.innerHTML = actions.map((action, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${action.project}</td>
+      <td>${action.actionPoint}</td>
+      <td>${action.owner}</td>
+      <td>${action.dueDate}</td>
+      <td><span class="badge ${action.status === 'Closed' ? 'badge-green' : 'badge-amber'}">${action.status}</span></td>
+      <td>${action.remarks}</td>
+    </tr>
+  `).join('');
+
+  const openCount = actions.filter(a => a.status === 'Open').length;
+  const closedCount = actions.filter(a => a.status === 'Closed').length;
+  
+  document.getElementById('overall-open-count').textContent = openCount;
+  document.getElementById('overall-closed-count').textContent = closedCount;
+}
+
+// ═══════════════════════════════════════
+// PROJECT SUMMARY
+// ═══════════════════════════════════════
+
+function renderProjectSummaryTable() {
+  const projects = getProjects();
+  const tbody = document.getElementById('project-summary-tbody');
+
+  if (projects.length === 0) {
+    tbody.innerHTML = '<tr id="project-summary-empty-row"><td colspan="10" style="text-align:center;padding:2.5rem;color:var(--text3)">No projects found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = projects.map((p, idx) => `
+    <tr>
+      <td>${idx + 1}</td>
+      <td>${p.projectName}</td>
+      <td>${p.modelName}</td>
+      <td>${p.customer}</td>
+      <td><span class="badge badge-blue">${p.bg}</span></td>
+      <td>${p.bu}</td>
+      <td>${p.stage}</td>
+      <td><span class="badge ${p.status === 'In Progress' ? 'badge-amber' : 'badge-green'}">${p.status}</span></td>
+      <td>${p.owner}</td>
+      <td>${p.mpDate}</td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════
+
+function updateDashboard() {
+  const projects = getProjects();
+  const prNotices = getPRNotices();
+  const actions = getActions();
+  const openActions = actions.filter(a => a.status === 'Open').length;
+  const closedActions = actions.filter(a => a.status === 'Closed').length;
+
+  document.getElementById('kpi-total').textContent = projects.length;
+  document.getElementById('kpi-pr').textContent = prNotices.length;
+  document.getElementById('kpi-open-actions').textContent = openActions;
+  document.getElementById('kpi-closed-actions').textContent = closedActions;
+}
+
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+
+function doLogout() {
+  alert('Logged out successfully');
+}
+
+// ═══════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', function() {
+  initializeData();
+  
+  // Add sample data for testing
+  const projects = getProjects();
+  const prNotices = getPRNotices();
+  const actions = getActions();
+  
+  if (projects.length === 0) {
+    projects.push({
+      id: 1,
+      projectName: 'Project Alpha',
+      modelName: 'Model XR-200A',
+      customer: 'Customer A',
+      bg: 'EIBG',
+      bu: 'APBU',
+      stage: 'DVT',
+      owner: 'John Doe',
+      mpDate: '2025-12-31',
+      status: 'In Progress',
+      createdDate: new Date().toLocaleDateString()
+    });
+    saveProjects(projects);
+  }
+
+  if (prNotices.length === 0) {
+    prNotices.push({
+      id: 1,
+      docNo: 'PR-001',
+      woNo: 'WO-001',
+      projectName: 'Project Alpha',
+      modelName: 'Model XR-200A',
+      requestor: 'John Doe',
+      stage: 'DVT',
+      buildDate: '2025-11-15',
+      status: 'In Approval',
+      createdDate: new Date().toLocaleDateString()
+    });
+    savePRNotices(prNotices);
+  }
+
+  if (actions.length === 0) {
+    actions.push({
+      id: 1,
+      project: 'Project Alpha',
+      actionPoint: 'Fix thermal issue',
+      owner: 'Jane Smith',
+      dueDate: '2025-12-15',
+      status: 'Open',
+      remarks: 'Pending engineering review'
+    });
+    saveActions(actions);
+  }
+
+  updateDashboard();
+  renderProjectsTable();
+  renderPRNoticeTable();
+  renderOverallActionsTable();
+  renderProjectSummaryTable();
+});
+</script>
+
+</body>
+</html>
